@@ -8,7 +8,7 @@ struct ModelSelectorView: View {
     private let models: [AIModel] = AIModel.allModels
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List(models) { model in
                 ModelRowView(model: model, isSelected: model == selectedModel) {
                     selectedModel = model
@@ -96,8 +96,18 @@ private struct ModelRowView: View {
         }
     }
 
+    private var formattedContextWindow: String {
+        let ctx = model.contextWindow
+        if ctx >= 1_000_000 {
+            return "\(ctx / 1_000_000)M"
+        } else if ctx >= 1_000 {
+            return "\(ctx / 1_000)K"
+        } else {
+            return "\(ctx)"
+        }
+    }
+
     private var subtitle: String {
-        let k = model.contextWindow / 1000
-        return "\(k)K ctx · \(model.provider.displayName)"
+        return "\(formattedContextWindow) ctx · \(model.provider.displayName)"
     }
 }
