@@ -51,10 +51,8 @@ final class ChatViewModel: ObservableObject {
                     model: selectedModel
                 )
 
-                for try await token in stream {
-                    if let delta = SSEParser.extractToken(from: token) {
-                        messages[assistantIndex].content += delta
-                    }
+                for try await delta in stream {
+                    messages[assistantIndex].content += delta
                 }
 
                 messages[assistantIndex].isStreaming = false
