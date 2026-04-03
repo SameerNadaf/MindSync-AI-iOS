@@ -1,7 +1,7 @@
 import Foundation
 
 protocol NetworkManagerProtocol {
-    func request<T: Decodable>(_ endpoint: APIEndpoint, responseType: T.Type) async throws -> T
+    func request<T: Decodable & Sendable>(_ endpoint: APIEndpoint, responseType: T.Type) async throws -> T
     func stream(_ endpoint: APIEndpoint) -> AsyncThrowingStream<String, Error>
 }
 
@@ -21,7 +21,7 @@ final class NetworkManager: NetworkManagerProtocol {
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
     }
 
-    func request<T: Decodable>(_ endpoint: APIEndpoint, responseType: T.Type) async throws -> T {
+    func request<T: Decodable & Sendable>(_ endpoint: APIEndpoint, responseType: T.Type) async throws -> T {
         var urlRequest = try endpoint.buildURLRequest()
         urlRequest = try await interceptor.intercept(request: urlRequest)
 

@@ -3,9 +3,9 @@ import SwiftUI
 struct SessionHistoryView: View {
 
     @StateObject private var viewModel: SessionHistoryViewModel
-    private let makeChatViewModel: (ChatSession) -> ChatViewModel
+    private let makeChatViewModel: @MainActor (ChatSession) -> ChatViewModel
 
-    init(viewModel: SessionHistoryViewModel, makeChatViewModel: @escaping (ChatSession) -> ChatViewModel) {
+    init(viewModel: SessionHistoryViewModel, makeChatViewModel: @escaping @MainActor (ChatSession) -> ChatViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.makeChatViewModel = makeChatViewModel
     }
