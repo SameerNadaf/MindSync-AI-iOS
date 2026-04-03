@@ -16,6 +16,11 @@
 			path = MindSync;
 			sourceTree = "<group>";
 		};
+		1B2226472F7FFCAD001F39C0 /* .github */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = .github;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +37,7 @@
 		1B22262E2F7FF7EC001F39C0 = {
 			isa = PBXGroup;
 			children = (
+				1B2226472F7FFCAD001F39C0 /* .github */,
 				1B2226392F7FF7EC001F39C0 /* MindSync */,
 				1B2226382F7FF7EC001F39C0 /* Products */,
 			);
@@ -62,6 +68,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1B2226392F7FF7EC001F39C0 /* MindSync */,
+				1B2226472F7FFCAD001F39C0 /* .github */,
 			);
 			name = MindSync;
 			packageProductDependencies = (
