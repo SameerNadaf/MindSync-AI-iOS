@@ -41,7 +41,7 @@ final class DependencyContainer {
     lazy var sessionRepository: ChatSessionRepositoryProtocol = ChatSessionLocalRepository()
 
     // MARK: - ViewModels
-    func makeChatViewModel(session: ChatSession = ChatSession()) -> ChatViewModel {
+    @MainActor func makeChatViewModel(session: ChatSession = ChatSession()) -> ChatViewModel {
         let sendMessageUseCase = SendMessageUseCase(chatRepository: chatRepository)
         return ChatViewModel(
             sendMessageUseCase: sendMessageUseCase,
@@ -50,16 +50,16 @@ final class DependencyContainer {
         )
     }
 
-    func makeCouncilViewModel() -> CouncilViewModel {
+    @MainActor func makeCouncilViewModel() -> CouncilViewModel {
         let useCase = SendCouncilMessageUseCase(chatRepository: chatRepository)
         return CouncilViewModel(useCase: useCase)
     }
 
-    func makeSessionHistoryViewModel() -> SessionHistoryViewModel {
+    @MainActor func makeSessionHistoryViewModel() -> SessionHistoryViewModel {
         SessionHistoryViewModel(sessionRepository: sessionRepository)
     }
 
-    func makeAPIKeyManagementViewModel() -> APIKeyManagementViewModel {
+    @MainActor func makeAPIKeyManagementViewModel() -> APIKeyManagementViewModel {
         APIKeyManagementViewModel(useCase: manageAPIKeyUseCase)
     }
 

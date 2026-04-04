@@ -2,15 +2,6 @@ import SwiftUI
 
 extension Color {
 
-    static let cardBackground = Color("CardBackground", bundle: nil)
-    static let primaryText = Color("PrimaryText", bundle: nil)
-    static let secondaryText = Color("SecondaryText", bundle: nil)
-    static let accentBrand = Color("AccentBrand", bundle: nil)
-    static let surfaceBackground = Color("SurfaceBackground", bundle: nil)
-
-    static let userBubble = Color("UserBubble", bundle: nil)
-    static let assistantBubble = Color("AssistantBubble", bundle: nil)
-
     // Provider accent colors — used in model selector row icons
     static let openAIAccent = Color(hex: "10A37F")
     static let anthropicAccent = Color(hex: "CC785C")
