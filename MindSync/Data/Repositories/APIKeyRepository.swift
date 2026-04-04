@@ -8,23 +8,23 @@ final class APIKeyRepository: APIKeyRepositoryProtocol {
         self.keychainManager = keychainManager
     }
 
-    func saveKey(_ key: String, for provider: AIProvider) throws {
-        try keychainManager.save(key, for: provider.keychainAccount)
+    func saveKey(_ key: String) throws {
+        try keychainManager.save(key, for: AppConstants.Keychain.openRouterKeyAccount)
     }
 
-    func getKey(for provider: AIProvider) throws -> String {
+    func getKey() throws -> String {
         do {
-            return try keychainManager.retrieve(for: provider.keychainAccount)
+            return try keychainManager.retrieve(for: AppConstants.Keychain.openRouterKeyAccount)
         } catch AppError.keychainFailed(operation: "not-found") {
-            throw AppError.missingAPIKey(provider: provider.displayName)
+            throw AppError.missingAPIKey(provider: "OpenRouter")
         }
     }
 
-    func deleteKey(for provider: AIProvider) throws {
-        try keychainManager.delete(for: provider.keychainAccount)
+    func deleteKey() throws {
+        try keychainManager.delete(for: AppConstants.Keychain.openRouterKeyAccount)
     }
 
-    func hasKey(for provider: AIProvider) -> Bool {
-        (try? keychainManager.retrieve(for: provider.keychainAccount)) != nil
+    func hasKey() -> Bool {
+        (try? keychainManager.retrieve(for: AppConstants.Keychain.openRouterKeyAccount)) != nil
     }
 }

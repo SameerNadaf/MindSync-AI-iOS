@@ -4,23 +4,18 @@ import CoreGraphics
 enum AppConstants {
 
     enum API {
-        static let openAIBaseURL = "https://api.openai.com/v1"
-        static let anthropicBaseURL = "https://api.anthropic.com/v1"
-        static let geminiBaseURL = "https://generativelanguage.googleapis.com/v1beta"
+        static let openRouterBaseURL = "https://openrouter.ai/api/v1"
+        static let openRouterAuthURL = "https://openrouter.ai/api/v1/auth/key"
 
         static let defaultTimeoutInterval: TimeInterval = 60
         static let streamingTimeoutInterval: TimeInterval = 180
 
-        static let anthropicVersion = "2023-06-01"
-        static let anthropicDefaultMaxTokens = 4096
-        static let openAIDefaultMaxTokens = 4096
+        static let defaultMaxTokens = 4096
     }
 
     enum Keychain {
         static let service = "com.mindsync.keychain"
-        static let openAIKeyAccount = "openai_api_key"
-        static let anthropicKeyAccount = "anthropic_api_key"
-        static let geminiKeyAccount = "gemini_api_key"
+        static let openRouterKeyAccount = "openrouter_api_key"
     }
 
     enum Chat {

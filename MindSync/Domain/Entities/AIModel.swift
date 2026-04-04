@@ -4,6 +4,7 @@ enum AIProvider: String, CaseIterable, Codable, Identifiable {
     case openAI = "openai"
     case anthropic = "anthropic"
     case gemini = "gemini"
+    case nvidia = "nvidia"
 
     var id: String { rawValue }
 
@@ -12,14 +13,7 @@ enum AIProvider: String, CaseIterable, Codable, Identifiable {
         case .openAI: return "GPT"
         case .anthropic: return "Claude"
         case .gemini: return "Gemini"
-        }
-    }
-
-    var keychainAccount: String {
-        switch self {
-        case .openAI: return AppConstants.Keychain.openAIKeyAccount
-        case .anthropic: return AppConstants.Keychain.anthropicKeyAccount
-        case .gemini: return AppConstants.Keychain.geminiKeyAccount
+        case .nvidia: return "Nvidia"
         }
     }
 }
@@ -33,7 +27,7 @@ struct AIModel: Identifiable, Hashable, Codable {
     let isPro: Bool
 
     static let gpt4o = AIModel(
-        id: "gpt-4o",
+        id: "openai/gpt-4o",
         name: "GPT-4o",
         provider: .openAI,
         contextWindow: 128_000,
@@ -42,7 +36,7 @@ struct AIModel: Identifiable, Hashable, Codable {
     )
 
     static let claude3Sonnet = AIModel(
-        id: "claude-3-5-sonnet-20241022",
+        id: "anthropic/claude-3.5-sonnet",
         name: "Claude 3.5 Sonnet",
         provider: .anthropic,
         contextWindow: 200_000,
@@ -51,13 +45,22 @@ struct AIModel: Identifiable, Hashable, Codable {
     )
 
     static let geminiPro = AIModel(
-        id: "gemini-1.5-pro",
+        id: "google/gemini-1.5-pro",
         name: "Gemini 1.5 Pro",
         provider: .gemini,
         contextWindow: 1_000_000,
         supportsStreaming: true,
         isPro: false
     )
+    
+    static let nemotron = AIModel(
+        id: "nvidia/nemotron-3-super-120b-a12b:free",
+        name: "Nemotron-3 120B",
+        provider: .nvidia,
+        contextWindow: 262_144 ,
+        supportsStreaming: true,
+        isPro: false
+    )
 
-    static let allModels: [AIModel] = [.gpt4o, .claude3Sonnet, .geminiPro]
+    static let allModels: [AIModel] = [.gpt4o, .claude3Sonnet, .geminiPro, .nemotron]
 }

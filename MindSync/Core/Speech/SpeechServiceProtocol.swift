@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 enum SpeechRecordingError: LocalizedError {
     case recognizerUnavailable
