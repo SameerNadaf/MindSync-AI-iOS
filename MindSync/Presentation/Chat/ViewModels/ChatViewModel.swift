@@ -126,6 +126,10 @@ final class ChatViewModel: ObservableObject {
     func clearChat() {
         cancelStreaming()
         speechService.stopSpeaking()
+        if speechService.isRecording {
+            speechService.stopRecording()
+        }
+        inputText = ""
         messages = []
         session = ChatSession(selectedModel: selectedModel)
     }
@@ -152,7 +156,7 @@ final class ChatViewModel: ObservableObject {
                 do {
                     try speechService.startRecording()
                 } catch {
-                    errorMessage = "Could not start voice recording."
+                    errorMessage = error.localizedDescription
                     logError("Recording start failed: \(error.localizedDescription)")
                 }
             }

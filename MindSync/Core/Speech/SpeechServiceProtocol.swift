@@ -1,5 +1,13 @@
 import Combine
 
+enum SpeechRecordingError: LocalizedError {
+    case recognizerUnavailable
+
+    var errorDescription: String? {
+        "Speech recognition is not available on this device or for the current language."
+    }
+}
+
 protocol SpeechServiceProtocol: AnyObject {
 
     /// True while the microphone is active and audio is being transcribed.

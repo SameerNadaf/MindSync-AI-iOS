@@ -43,14 +43,22 @@ final class SpeechService: NSObject, ObservableObject, SpeechServiceProtocol {
                 continuation.resume(returning: status == .authorized)
             }
         }
-        guard speechGranted else { return false }
-        return await AVAudioApplication.requestRecordPermission()
+        guard speechGranted else {
+            await MainActor.run { objectWillChange.send() }
+            return false
+        }
+        let micGranted = await AVAudioApplication.requestRecordPermission()
+        await MainActor.run { objectWillChange.send() }
+        return micGranted
     }
 
     // MARK: - STT
 
     func startRecording() throws {
         guard !isRecording else { return }
+        guard recognizer.isAvailable else {
+            throw SpeechRecordingError.recognizerUnavailable
+        }
 
         recognitionTask?.cancel()
         recognitionTask = nil
@@ -65,7 +73,7 @@ final class SpeechService: NSObject, ObservableObject, SpeechServiceProtocol {
         recognitionRequest.shouldReportPartialResults = true
 
         let inputNode = audioEngine.inputNode
-        recognitionTask = recognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+        recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self else { return }
             if let result {
                 let text = result.bestTranscription.formattedString
@@ -93,8 +101,6 @@ final class SpeechService: NSObject, ObservableObject, SpeechServiceProtocol {
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
-        recognitionTask?.cancel()
-        recognitionTask = nil
         recognitionRequest = nil
 
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
