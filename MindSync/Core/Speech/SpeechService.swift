@@ -56,7 +56,7 @@ final class SpeechService: NSObject, ObservableObject, SpeechServiceProtocol {
 
     func startRecording() throws {
         guard !isRecording else { return }
-        guard recognizer.isAvailable else {
+        guard recognizer?.isAvailable == true else {
             throw SpeechRecordingError.recognizerUnavailable
         }
 
@@ -73,7 +73,7 @@ final class SpeechService: NSObject, ObservableObject, SpeechServiceProtocol {
         recognitionRequest.shouldReportPartialResults = true
 
         let inputNode = audioEngine.inputNode
-        recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+        recognitionTask = recognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self else { return }
             if let result {
                 let text = result.bestTranscription.formattedString
@@ -82,6 +82,11 @@ final class SpeechService: NSObject, ObservableObject, SpeechServiceProtocol {
             if error != nil || result?.isFinal == true {
                 self.stopRecording()
             }
+        }
+        
+        guard recognitionTask != nil else {
+            stopRecording()
+            return
         }
 
         let recordingFormat = inputNode.outputFormat(forBus: 0)

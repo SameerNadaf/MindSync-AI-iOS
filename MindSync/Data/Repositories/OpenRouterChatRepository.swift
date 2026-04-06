@@ -1,6 +1,6 @@
 import Foundation
 
-final class OpenAIChatRepository: ChatRepositoryProtocol {
+final class OpenRouterChatRepository: ChatRepositoryProtocol {
 
     private let networkManager: NetworkManagerProtocol
     private let apiKeyRepository: APIKeyRepositoryProtocol
@@ -21,15 +21,15 @@ final class OpenAIChatRepository: ChatRepositoryProtocol {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let apiKey = try apiKeyRepository.getKey(for: .openAI)
+                    let apiKey = try apiKeyRepository.getKey()
                     let dtoMessages = buildMessages(from: session, newMessage: message)
-                    let requestBody = OpenAIChatRequestDTO(
+                    let requestBody = OpenRouterChatRequestDTO(
                         model: model.id,
                         messages: dtoMessages,
                         stream: true,
-                        maxTokens: AppConstants.API.openAIDefaultMaxTokens
+                        maxTokens: AppConstants.API.defaultMaxTokens
                     )
-                    let endpoint = OpenAIChatEndpoint(apiKey: apiKey, requestBody: requestBody)
+                    let endpoint = OpenRouterChatEndpoint(apiKey: apiKey, requestBody: requestBody)
                     let rawStream = networkManager.stream(endpoint)
 
                     for try await jsonToken in rawStream {
@@ -42,7 +42,7 @@ final class OpenAIChatRepository: ChatRepositoryProtocol {
                 } catch is CancellationError {
                     continuation.finish()
                 } catch {
-                    logError("OpenAI stream error: \(error.localizedDescription)")
+                    logError("OpenRouter stream error: \(error.localizedDescription)")
                     continuation.finish(throwing: error)
                 }
             }
@@ -65,7 +65,7 @@ final class OpenAIChatRepository: ChatRepositoryProtocol {
 
     // MARK: - Private
 
-    private func buildMessages(from session: ChatSession, newMessage: ChatMessage) -> [OpenAIChatRequestDTO.Message] {
+    private func buildMessages(from session: ChatSession, newMessage: ChatMessage) -> [OpenRouterChatRequestDTO.Message] {
         let history = Array(
             session.messages
                 .suffix(AppConstants.Chat.maxHistoryCount)
@@ -75,6 +75,6 @@ final class OpenAIChatRepository: ChatRepositoryProtocol {
         let allMessages = history.contains(where: { $0.id == newMessage.id })
             ? history
             : history + [newMessage]
-        return allMessages.map { OpenAIChatRequestDTO.Message(role: $0.role.rawValue, content: $0.content) }
+        return allMessages.map { OpenRouterChatRequestDTO.Message(role: $0.role.rawValue, content: $0.content) }
     }
 }

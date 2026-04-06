@@ -4,71 +4,74 @@ import Combine
 @MainActor
 final class APIKeyManagementViewModel: ObservableObject {
 
-    struct ProviderState: Identifiable {
-        let provider: AIProvider
-        var draftKey: String = ""
-        var isRevealed: Bool = false
-        var hasStoredKey: Bool = false
-        var feedback: Feedback? = nil
-
-        var id: String { provider.rawValue }
-
-        enum Feedback: Equatable {
-            case saved
-            case error(String)
-        }
+    enum Feedback: Equatable {
+        case saved
+        case error(String)
     }
 
-    @Published var providerStates: [ProviderState] = [.openAI, .anthropic, .gemini]
-        .map { ProviderState(provider: $0) }
+    @Published var draftKey: String = ""
+    @Published var isRevealed: Bool = false
+    @Published var hasStoredKey: Bool = false
+    @Published var feedback: Feedback? = nil
+    @Published var isVerifying: Bool = false
 
     private let useCase: ManageAPIKeyUseCaseProtocol
+    private var saveTask: Task<Void, Never>?
 
     init(useCase: ManageAPIKeyUseCaseProtocol) {
         self.useCase = useCase
     }
+    
+    deinit {
+        saveTask?.cancel()
+    }
 
-    func loadKeyStatuses() {
-        for i in providerStates.indices {
-            providerStates[i].hasStoredKey = useCase.hasKey(for: providerStates[i].provider)
+    func loadKeyStatus() {
+        hasStoredKey = useCase.hasKey()
+    }
+
+    func save() {
+        saveTask?.cancel()
+        saveTask = Task {
+            isVerifying = true
+            feedback = nil
+            do {
+                try await useCase.saveKey(draftKey)
+                if Task.isCancelled { return }
+                hasStoredKey = true
+                draftKey = ""
+                isRevealed = false
+                feedback = .saved
+            } catch is CancellationError {
+                return
+            } catch {
+                if Task.isCancelled { return }
+                feedback = .error(error.localizedDescription)
+                logError("Save API key failed: \(error.localizedDescription)")
+            }
+            if Task.isCancelled { return }
+            isVerifying = false
         }
     }
 
-    func save(for provider: AIProvider) {
-        guard let i = providerStates.firstIndex(where: { $0.provider == provider }) else { return }
+    func delete() {
         do {
-            try useCase.saveKey(providerStates[i].draftKey, for: provider)
-            providerStates[i].hasStoredKey = true
-            providerStates[i].draftKey = ""
-            providerStates[i].isRevealed = false
-            providerStates[i].feedback = .saved
+            try useCase.deleteKey()
+            hasStoredKey = false
+            draftKey = ""
+            isRevealed = false
+            feedback = nil
         } catch {
-            providerStates[i].feedback = .error(error.localizedDescription)
-            logError("Save API key failed for \(provider.displayName): \(error.localizedDescription)")
+            feedback = .error(error.localizedDescription)
+            logError("Delete API key failed: \(error.localizedDescription)")
         }
     }
 
-    func delete(for provider: AIProvider) {
-        guard let i = providerStates.firstIndex(where: { $0.provider == provider }) else { return }
-        do {
-            try useCase.deleteKey(for: provider)
-            providerStates[i].hasStoredKey = false
-            providerStates[i].draftKey = ""
-            providerStates[i].isRevealed = false
-            providerStates[i].feedback = nil
-        } catch {
-            providerStates[i].feedback = .error(error.localizedDescription)
-            logError("Delete API key failed for \(provider.displayName): \(error.localizedDescription)")
-        }
+    func clearFeedback() {
+        feedback = nil
     }
 
-    func clearFeedback(for provider: AIProvider) {
-        guard let i = providerStates.firstIndex(where: { $0.provider == provider }) else { return }
-        providerStates[i].feedback = nil
-    }
-
-    func toggleReveal(for provider: AIProvider) {
-        guard let i = providerStates.firstIndex(where: { $0.provider == provider }) else { return }
-        providerStates[i].isRevealed.toggle()
+    func toggleReveal() {
+        isRevealed.toggle()
     }
 }

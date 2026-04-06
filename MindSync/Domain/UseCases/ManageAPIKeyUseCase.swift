@@ -1,10 +1,10 @@
 import Foundation
 
 protocol ManageAPIKeyUseCaseProtocol {
-    func saveKey(_ key: String, for provider: AIProvider) throws
-    func getKey(for provider: AIProvider) throws -> String
-    func deleteKey(for provider: AIProvider) throws
-    func hasKey(for provider: AIProvider) -> Bool
+    func saveKey(_ key: String) async throws
+    func getKey() throws -> String
+    func deleteKey() throws
+    func hasKey() -> Bool
 }
 
 final class ManageAPIKeyUseCase: ManageAPIKeyUseCaseProtocol {
@@ -15,25 +15,41 @@ final class ManageAPIKeyUseCase: ManageAPIKeyUseCaseProtocol {
         self.apiKeyRepository = apiKeyRepository
     }
 
-    func saveKey(_ key: String, for provider: AIProvider) throws {
+    func saveKey(_ key: String) async throws {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw AppError.custom(message: "API key cannot be empty.")
         }
-        try apiKeyRepository.saveKey(trimmed, for: provider)
-        logInfo("Saved API key for provider: \(provider.displayName)")
+        
+        guard let url = URL(string: AppConstants.API.openRouterAuthURL) else {
+            throw AppError.custom(message: "Invalid validation URL.")
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(trimmed)", forHTTPHeaderField: "Authorization")
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError.custom(message: "Invalid API Key. Verification failed.")
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw AppError.custom(message: "Invalid API Key. Verification failed.")
+        }
+
+        try apiKeyRepository.saveKey(trimmed)
+        logInfo("Saved OpenRouter API key")
     }
 
-    func getKey(for provider: AIProvider) throws -> String {
-        try apiKeyRepository.getKey(for: provider)
+    func getKey() throws -> String {
+        try apiKeyRepository.getKey()
     }
 
-    func deleteKey(for provider: AIProvider) throws {
-        try apiKeyRepository.deleteKey(for: provider)
-        logInfo("Deleted API key for provider: \(provider.displayName)")
+    func deleteKey() throws {
+        try apiKeyRepository.deleteKey()
+        logInfo("Deleted OpenRouter API key")
     }
 
-    func hasKey(for provider: AIProvider) -> Bool {
-        apiKeyRepository.hasKey(for: provider)
+    func hasKey() -> Bool {
+        apiKeyRepository.hasKey()
     }
 }

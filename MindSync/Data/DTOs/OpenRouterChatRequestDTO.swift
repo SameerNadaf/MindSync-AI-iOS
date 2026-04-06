@@ -1,6 +1,6 @@
 import Foundation
 
-struct OpenAIChatRequestDTO: Encodable {
+struct OpenRouterChatRequestDTO: Encodable {
     let model: String
     let messages: [Message]
     let stream: Bool

@@ -18,19 +18,9 @@ final class DependencyContainer {
         keychainManager: keychainManager
     )
 
-    lazy var chatRepository: ChatRepositoryProtocol = ChatRepositoryRouter(
-        openAIRepository: OpenAIChatRepository(
-            networkManager: networkManager,
-            apiKeyRepository: apiKeyRepository
-        ),
-        anthropicRepository: AnthropicChatRepository(
-            networkManager: networkManager,
-            apiKeyRepository: apiKeyRepository
-        ),
-        geminiRepository: GeminiChatRepository(
-            networkManager: networkManager,
-            apiKeyRepository: apiKeyRepository
-        )
+    lazy var chatRepository: ChatRepositoryProtocol = OpenRouterChatRepository(
+        networkManager: networkManager,
+        apiKeyRepository: apiKeyRepository
     )
 
     // MARK: - Use Cases

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct APIKeyManagementView: View {
 
+    private static let openRouterKeysURL = URL(string: "https://openrouter.ai/keys")
+
     @StateObject private var viewModel: APIKeyManagementViewModel
 
     init(viewModel: APIKeyManagementViewModel) {
@@ -11,16 +13,25 @@ struct APIKeyManagementView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    ForEach($viewModel.providerStates) { $state in
-                        ProviderKeyCard(state: $state) {
-                            viewModel.save(for: state.provider)
-                        } onDelete: {
-                            viewModel.delete(for: state.provider)
-                        } onToggleReveal: {
-                            viewModel.toggleReveal(for: state.provider)
-                        } onClearFeedback: {
-                            viewModel.clearFeedback(for: state.provider)
+                VStack(spacing: 24) {
+                    
+                    Text("Enter an OpenRouter API key to power all models in MindSync.")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                    
+                    keyCard
+                    
+                    if let openRouterURL = Self.openRouterKeysURL {
+                        Link(destination: openRouterURL) {
+                            HStack(spacing: 6) {
+                                Text("Get OpenRouter Key")
+                                Image(systemName: "arrow.up.right.square")
+                            }
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(Color.accentBrand)
                         }
                     }
                 }
@@ -30,23 +41,14 @@ struct APIKeyManagementView: View {
             .navigationTitle("API Keys")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .onAppear { viewModel.loadKeyStatuses() }
+        .onAppear { viewModel.loadKeyStatus() }
     }
-}
 
-// MARK: - Provider Key Card
+    // MARK: - Key Card
 
-private struct ProviderKeyCard: View {
-
-    @Binding var state: APIKeyManagementViewModel.ProviderState
-    let onSave: () -> Void
-    let onDelete: () -> Void
-    let onToggleReveal: () -> Void
-    let onClearFeedback: () -> Void
-
-    var body: some View {
+    private var keyCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            providerHeader
+            header
             keyInputRow
             actionRow
             feedbackLabel
@@ -55,53 +57,51 @@ private struct ProviderKeyCard: View {
         .background(Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: AppConstants.UI.cornerRadius))
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-        .task(id: state.feedback) {
-            guard state.feedback != nil else { return }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            onClearFeedback()
+        .task(id: viewModel.feedback) {
+            guard viewModel.feedback != nil else { return }
+            do {
+                try await Task.sleep(nanoseconds: 2_000_000_000)
+                viewModel.clearFeedback()
+            } catch {
+                return
+            }
         }
     }
 
     // MARK: - Header
 
-    private var providerHeader: some View {
+    private var header: some View {
         HStack(spacing: 10) {
-            providerIcon
-            Text(state.provider.displayName)
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.accentBrand.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "key.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color.accentBrand)
+            }
+            
+            Text("OpenRouter API Key")
                 .font(.headline)
                 .foregroundStyle(Color.primaryText)
+            
             Spacer()
-            statusBadge
+            
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(viewModel.hasStoredKey ? Color.green : Color.orange)
+                    .frame(width: 7, height: 7)
+                Text(viewModel.hasStoredKey ? "Configured" : "Not set")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(viewModel.hasStoredKey ? Color.green : Color.orange)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill((viewModel.hasStoredKey ? Color.green : Color.orange).opacity(0.1))
+            )
         }
-    }
-
-    private var providerIcon: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(providerColor.opacity(0.15))
-                .frame(width: 36, height: 36)
-            Text(providerInitials)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(providerColor)
-        }
-    }
-
-    private var statusBadge: some View {
-        let isConfigured = state.hasStoredKey
-        return HStack(spacing: 4) {
-            Circle()
-                .fill(isConfigured ? Color.green : Color.orange)
-                .frame(width: 7, height: 7)
-            Text(isConfigured ? "Configured" : "Not set")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(isConfigured ? Color.green : Color.orange)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill((isConfigured ? Color.green : Color.orange).opacity(0.1))
-        )
     }
 
     // MARK: - Input
@@ -109,10 +109,10 @@ private struct ProviderKeyCard: View {
     private var keyInputRow: some View {
         HStack(spacing: 8) {
             Group {
-                if state.isRevealed {
-                    TextField(inputPlaceholder, text: $state.draftKey)
+                if viewModel.isRevealed {
+                    TextField(viewModel.hasStoredKey ? "Enter new key to replace…" : "Enter API key…", text: $viewModel.draftKey)
                 } else {
-                    SecureField(inputPlaceholder, text: $state.draftKey)
+                    SecureField(viewModel.hasStoredKey ? "Enter new key to replace…" : "Enter API key…", text: $viewModel.draftKey)
                 }
             }
             .privacySensitive()
@@ -124,8 +124,8 @@ private struct ProviderKeyCard: View {
             .background(Color.surfaceBackground)
             .clipShape(RoundedRectangle(cornerRadius: 10))
 
-            Button(action: onToggleReveal) {
-                Image(systemName: state.isRevealed ? "eye.slash" : "eye")
+            Button(action: { viewModel.toggleReveal() }) {
+                Image(systemName: viewModel.isRevealed ? "eye.slash" : "eye")
                     .foregroundStyle(Color.secondaryText)
                     .frame(width: 36, height: 36)
             }
@@ -136,24 +136,33 @@ private struct ProviderKeyCard: View {
 
     private var actionRow: some View {
         HStack(spacing: 10) {
-            if state.hasStoredKey {
-                Button(role: .destructive, action: onDelete) {
+            if viewModel.hasStoredKey {
+                Button(role: .destructive, action: { viewModel.delete() }) {
                     Label("Delete", systemImage: "trash")
                         .font(.subheadline.weight(.medium))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
+                .disabled(viewModel.isVerifying)
             }
 
-            Button(action: onSave) {
-                Label("Save Key", systemImage: "checkmark.shield")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
+            Button(action: { viewModel.save() }) {
+                HStack {
+                    if viewModel.isVerifying {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Label("Verify & Save", systemImage: "checkmark.shield")
+                    }
+                }
+                .font(.subheadline.weight(.medium))
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(Color.accentBrand)
-            .disabled(state.draftKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(viewModel.draftKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isVerifying)
         }
     }
 
@@ -161,10 +170,10 @@ private struct ProviderKeyCard: View {
 
     @ViewBuilder
     private var feedbackLabel: some View {
-        if let feedback = state.feedback {
+        if let feedback = viewModel.feedback {
             switch feedback {
             case .saved:
-                Label("Key saved successfully", systemImage: "checkmark.circle.fill")
+                Label("Key verified and saved", systemImage: "checkmark.circle.fill")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.green)
             case .error(let message):
@@ -172,28 +181,6 @@ private struct ProviderKeyCard: View {
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.red)
             }
-        }
-    }
-
-    // MARK: - Helpers
-
-    private var inputPlaceholder: String {
-        state.hasStoredKey ? "Enter new key to replace…" : "Enter API key…"
-    }
-
-    private var providerColor: Color {
-        switch state.provider {
-        case .openAI:    return .openAIAccent
-        case .anthropic: return .anthropicAccent
-        case .gemini:    return .geminiAccent
-        }
-    }
-
-    private var providerInitials: String {
-        switch state.provider {
-        case .openAI:    return "GPT"
-        case .anthropic: return "ANT"
-        case .gemini:    return "GEM"
         }
     }
 }
