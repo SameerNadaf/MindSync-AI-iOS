@@ -50,10 +50,11 @@ actor ChatSessionLocalRepository: ChatSessionRepositoryProtocol {
                 var session = try decoder.decode(ChatSession.self, from: data)
                 
                 let oldId = session.selectedModel.id
-                if let canonical = AIModel.allModels.first(where: {
-                    $0.id == oldId ||
-                    $0.id.hasSuffix(oldId) ||
-                    oldId.hasSuffix($0.id)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+                if !oldId.isEmpty, let canonical = AIModel.allModels.first(where: {
+                    let canonicalId = $0.id.lowercased()
+                    return canonicalId == oldId || canonicalId.hasSuffix("/\(oldId)")
                 }) {
                     session.selectedModel = canonical
                 } else if oldId.contains("gpt-4o") {
