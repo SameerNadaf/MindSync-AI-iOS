@@ -16,6 +16,7 @@ enum AppConstants {
     enum Keychain {
         static let service = "com.mindsync.keychain"
         static let openRouterKeyAccount = "openrouter_api_key"
+        static let jwtAccessTokenAccount = "jwt_access_token"
     }
 
     enum Chat {

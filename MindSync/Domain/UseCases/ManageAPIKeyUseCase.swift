@@ -26,14 +26,17 @@ final class ManageAPIKeyUseCase: ManageAPIKeyUseCaseProtocol {
             throw AppError.custom(message: "API key cannot be empty.")
         }
 
-        let endpoint = HealthEndpoint(apiKey: trimmed)
+        // Save first so the interceptor can inject it during health check validation.
+        try apiKeyRepository.saveKey(trimmed)
+
         do {
-            _ = try await networkManager.request(endpoint, responseType: HealthResponseDTO.self)
+            _ = try await networkManager.request(HealthEndpoint(), responseType: HealthResponseDTO.self)
         } catch {
+            // Rollback the saved key if validation fails.
+            try? apiKeyRepository.deleteKey()
             throw AppError.custom(message: "Invalid API key. Verification failed.")
         }
 
-        try apiKeyRepository.saveKey(trimmed)
         logInfo("Saved OpenRouter API key")
     }
 

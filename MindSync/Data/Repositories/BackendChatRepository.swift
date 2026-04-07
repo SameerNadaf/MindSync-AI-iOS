@@ -3,14 +3,9 @@ import Foundation
 final class BackendChatRepository: ChatRepositoryProtocol {
 
     private let networkManager: NetworkManagerProtocol
-    private let apiKeyRepository: APIKeyRepositoryProtocol
 
-    init(
-        networkManager: NetworkManagerProtocol,
-        apiKeyRepository: APIKeyRepositoryProtocol
-    ) {
+    init(networkManager: NetworkManagerProtocol) {
         self.networkManager = networkManager
-        self.apiKeyRepository = apiKeyRepository
     }
 
     func streamMessage(
@@ -21,12 +16,11 @@ final class BackendChatRepository: ChatRepositoryProtocol {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let apiKey = try apiKeyRepository.getKey()
                     let requestBody = BackendChatRequestDTO(
                         message: message.content,
                         model: model.id
                     )
-                    let endpoint = BackendChatEndpoint(apiKey: apiKey, requestBody: requestBody)
+                    let endpoint = BackendChatEndpoint(requestBody: requestBody)
                     let rawStream = networkManager.stream(endpoint)
 
                     for try await jsonToken in rawStream {
@@ -53,7 +47,10 @@ final class BackendChatRepository: ChatRepositoryProtocol {
         session: ChatSession,
         model: AIModel
     ) async throws -> ChatMessage {
-        throw AppError.custom(message: "Use streamMessage for real-time responses.")
+        let requestBody = BackendChatRequestDTO(message: message.content, model: model.id)
+        let endpoint = ChatNonStreamEndpoint(requestBody: requestBody)
+        let response = try await networkManager.request(endpoint, responseType: ChatNonStreamResponseDTO.self)
+        return ChatMessage(role: .assistant, content: response.data.response)
     }
 
     func saveSession(_ session: ChatSession) async throws {}

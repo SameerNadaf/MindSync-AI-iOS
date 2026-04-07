@@ -5,18 +5,12 @@ struct AICouncilEndpoint: APIEndpoint {
     var path: String { "/api/v1/ai-council" }
     var method: HTTPMethod { .post }
     var requiresStreaming: Bool { true }
-
-    var headers: [String: String] {
-        ["Authorization": "Bearer \(apiKey)"]
-    }
-
+    var headers: [String: String] { ["Accept": "text/event-stream"] }
     var body: Encodable? { requestBody }
 
-    private let apiKey: String
     private let requestBody: AICouncilRequestDTO
 
-    init(apiKey: String, requestBody: AICouncilRequestDTO) {
-        self.apiKey = apiKey
+    init(requestBody: AICouncilRequestDTO) {
         self.requestBody = requestBody
     }
 }

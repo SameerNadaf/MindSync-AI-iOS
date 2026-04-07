@@ -10,27 +10,33 @@ final class DependencyContainer {
     lazy var keychainManager: KeychainManagerProtocol = KeychainManager()
     lazy var speechService: SpeechServiceProtocol = SpeechService()
 
-    // MARK: - Network
-    lazy var networkManager: NetworkManagerProtocol = NetworkManager()
-
-    // MARK: - Repositories
+    // MARK: - Auth / Key Storage
     lazy var apiKeyRepository: APIKeyRepositoryProtocol = APIKeyRepository(
         keychainManager: keychainManager
     )
+    lazy var authTokenRepository: AuthTokenRepositoryProtocol = AuthTokenRepository(
+        keychainManager: keychainManager
+    )
 
+    // MARK: - Network
+    lazy var networkManager: NetworkManagerProtocol = NetworkManager(
+        interceptor: BackendAuthInterceptor(
+            apiKeyRepository: apiKeyRepository,
+            authTokenRepository: authTokenRepository
+        )
+    )
+
+    // MARK: - Repositories
     lazy var chatRepository: ChatRepositoryProtocol = BackendChatRepository(
-        networkManager: networkManager,
-        apiKeyRepository: apiKeyRepository
+        networkManager: networkManager
     )
 
     lazy var explainRepository: ExplainRepositoryProtocol = ExplainRepository(
-        networkManager: networkManager,
-        apiKeyRepository: apiKeyRepository
+        networkManager: networkManager
     )
 
     lazy var sessionSummaryRepository: SessionSummaryRepositoryProtocol = SessionSummaryRepository(
-        networkManager: networkManager,
-        apiKeyRepository: apiKeyRepository
+        networkManager: networkManager
     )
 
     // MARK: - Use Cases
