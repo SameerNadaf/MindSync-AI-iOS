@@ -99,7 +99,9 @@ final class FirebaseAuthRepository: AuthRepositoryProtocol {
             return authResult.user.toAppUser()
         } catch {
             // User cancelled the Google Sign-In flow
-            if (error as NSError).code == GIDSignInError.canceled.rawValue {
+            let nsError = error as NSError
+            if nsError.domain == "com.google.GIDSignIn",
+               nsError.code == GIDSignInError.canceled.rawValue {
                 throw AppError.userCancelled
             }
             logError("Google sign-in failed: \(error.localizedDescription)")
