@@ -149,8 +149,8 @@ final class FirebaseAuthRepository: AuthRepositoryProtocol {
     func signOut() throws {
         do {
             // Sign out from Google as well
-            GIDSignIn.sharedInstance.signOut()
             try auth.signOut()
+            GIDSignIn.sharedInstance.signOut()
             logInfo("User signed out")
         } catch {
             logError("Sign-out failed: \(error.localizedDescription)")
